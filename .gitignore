@@ -35,3 +35,9 @@ FMT.build
 Makefile
 run-msbuild.bat
 fmt.pc
+
+###### custom ######
+Makefile
+
+*.vcxproj*
+*.sln*
