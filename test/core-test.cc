@@ -141,7 +141,7 @@ TEST(buffer_test, indestructible) {
 }
 
 template <typename T> struct mock_buffer final : buffer<T> {
-  MOCK_METHOD1(do_grow, size_t(size_t capacity));
+  MOCK_METHOD(size_t, do_grow, (size_t));
 
   void grow(size_t capacity) override {
     this->set(this->data(), do_grow(capacity));
@@ -327,8 +327,8 @@ template <typename T> struct mock_visitor {
     ON_CALL(*this, visit(_)).WillByDefault(Return(test_result()));
   }
 
-  MOCK_METHOD1_T(visit, test_result(T value));
-  MOCK_METHOD0_T(unexpected, void());
+  MOCK_METHOD(test_result, visit, (T));
+  MOCK_METHOD(void, unexpected, ());
 
   auto operator()(T value) -> test_result { return visit(value); }
 
@@ -361,10 +361,11 @@ VISIT_TYPE(unsigned long, unsigned long long);
     testing::StrictMock<mock_visitor<decltype(expected)>> visitor;        \
     EXPECT_CALL(visitor, visit(expected));                                \
     using iterator = std::back_insert_iterator<buffer<Char>>;             \
+    auto var = value;                                                     \
     fmt::visit_format_arg(                                                \
         visitor,                                                          \
         fmt::detail::make_arg<fmt::basic_format_context<iterator, Char>>( \
-            value));                                                      \
+            var));                                                        \
   }
 
 #define CHECK_ARG_SIMPLE(value)                             \
@@ -829,4 +830,29 @@ TEST(core_test, has_const_formatter) {
 
 TEST(core_test, format_nonconst) {
   EXPECT_EQ(fmt::format("{}", nonconst_formattable()), "test");
+}
+
+struct its_a_trap {
+  template <typename T> operator T() const {
+    auto v = T();
+    v.x = 42;
+    return v;
+  }
+};
+
+FMT_BEGIN_NAMESPACE
+template <> struct formatter<its_a_trap> {
+  auto parse(format_parse_context& ctx) -> decltype(ctx.begin()) {
+    return ctx.begin();
+  }
+
+  auto format(its_a_trap, format_context& ctx) const -> decltype(ctx.out()) {
+    auto s = string_view("42");
+    return std::copy(s.begin(), s.end(), ctx.out());
+  }
+};
+FMT_END_NAMESPACE
+
+TEST(core_test, trappy_conversion) {
+  EXPECT_EQ(fmt::format("{}", its_a_trap()), "42");
 }

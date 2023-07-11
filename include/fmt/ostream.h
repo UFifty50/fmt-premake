@@ -111,7 +111,7 @@ struct basic_ostream_formatter : formatter<basic_string_view<Char>, Char> {
   auto format(const T& value, basic_format_context<OutputIt, Char>& ctx) const
       -> OutputIt {
     auto buffer = basic_memory_buffer<Char>();
-    format_value(buffer, value, ctx.locale());
+    detail::format_value(buffer, value, ctx.locale());
     return formatter<basic_string_view<Char>, Char>::format(
         {buffer.data(), buffer.size()}, ctx);
   }
@@ -155,7 +155,7 @@ inline void vprint_directly(std::ostream& os, string_view format_str,
 
 }  // namespace detail
 
-FMT_MODULE_EXPORT template <typename Char>
+FMT_EXPORT template <typename Char>
 void vprint(std::basic_ostream<Char>& os,
             basic_string_view<type_identity_t<Char>> format_str,
             basic_format_args<buffer_context<type_identity_t<Char>>> args) {
@@ -174,7 +174,7 @@ void vprint(std::basic_ostream<Char>& os,
     fmt::print(cerr, "Don't {}!", "panic");
   \endrst
  */
-FMT_MODULE_EXPORT template <typename... T>
+FMT_EXPORT template <typename... T>
 void print(std::ostream& os, format_string<T...> fmt, T&&... args) {
   const auto& vargs = fmt::make_format_args(args...);
   if (detail::is_utf8())
@@ -183,7 +183,7 @@ void print(std::ostream& os, format_string<T...> fmt, T&&... args) {
     detail::vprint_directly(os, fmt, vargs);
 }
 
-FMT_MODULE_EXPORT
+FMT_EXPORT
 template <typename... Args>
 void print(std::wostream& os,
            basic_format_string<wchar_t, type_identity_t<Args>...> fmt,
@@ -191,12 +191,12 @@ void print(std::wostream& os,
   vprint(os, fmt, fmt::make_format_args<buffer_context<wchar_t>>(args...));
 }
 
-FMT_MODULE_EXPORT template <typename... T>
+FMT_EXPORT template <typename... T>
 void println(std::ostream& os, format_string<T...> fmt, T&&... args) {
-  print(os, "{}\n", fmt::format(fmt, std::forward<T>(args)...));
+  fmt::print(os, "{}\n", fmt::format(fmt, std::forward<T>(args)...));
 }
 
-FMT_MODULE_EXPORT
+FMT_EXPORT
 template <typename... Args>
 void println(std::wostream& os,
              basic_format_string<wchar_t, type_identity_t<Args>...> fmt,
