@@ -2,7 +2,7 @@ project "fmt"
 	kind "StaticLib"
 	language "C++"
 	cppdialect "C++11"
-    staticruntime "on"
+    staticruntime "off"
 
 	targetdir ("bin/" .. outputDir .. "/")
 	objdir ("bin/intermediate/" .. outputDir .. "/")
